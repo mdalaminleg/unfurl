@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>New Wish – Unfurl</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #0a0a1a;
+      --bg-gradient: linear-gradient(135deg, #0a0a1a 0%, #0f0f25 100%);
+      --surface: #111122;
+      --surface2: #1a1a2e;
+      --surface3: #16213e;
+      --border: rgba(255,255,255,0.06);
+      --accent: #e94560;
+      --accent2: #ff6b6b;
+      --gold: #ffd700;
+      --white: #f0f4f8;
+      --gray: #7a8899;
+      --radius: 12px;
+      --radius-lg: 20px;
+      --transition: all 0.2s ease;
+    }
+    body { background: var(--bg-gradient); color: var(--white); font-family: 'Inter', sans-serif; }
+    .container { max-width: 800px; margin: 0 auto; padding: 0 24px; }
+    .header { padding: 24px 0; border-bottom: 1px solid var(--border); margin-bottom: 32px; display: flex; align-items: center; gap: 16px; }
+    .back-btn { background: none; border: none; cursor: pointer; padding: 8px; border-radius: var(--radius); color: var(--gray); }
+    .back-btn:hover { background: var(--surface2); color: var(--white); }
+    h1 { font-family: 'Cormorant Garamond', serif; font-size: 28px; }
+    .form-group { margin-bottom: 24px; }
+    label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--gray); }
+    input, textarea, select { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; color: var(--white); font-family: 'Inter', sans-serif; font-size: 14px; }
+    textarea { resize: vertical; min-height: 150px; }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
+    .char-count { text-align: right; font-size: 11px; color: var(--gray); margin-top: 6px; }
+    .btn-primary { width: 100%; background: var(--accent); color: white; border: none; padding: 14px; border-radius: var(--radius); font-weight: 600; cursor: pointer; transition: var(--transition); font-size: 16px; }
+    .btn-primary:hover { background: var(--accent2); transform: translateY(-2px); }
+    .image-preview { margin-top: 12px; text-align: center; }
+    .preview-img { max-width: 200px; max-height: 200px; border-radius: var(--radius); }
+    .milestone-input { display: flex; gap: 12px; margin-bottom: 12px; }
+    .milestone-input input { flex: 1; }
+    .remove-milestone { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 20px; }
+    .add-milestone { background: var(--surface3); border: 1px solid var(--border); padding: 8px 16px; border-radius: var(--radius); cursor: pointer; font-size: 13px; margin-top: 8px; }
+    .mood-grid { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+    .mood-option { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 16px; cursor: pointer; transition: var(--transition); font-size: 20px; }
+    .mood-option.selected { background: var(--accent); border-color: var(--accent); }
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--surface3); padding: 12px 24px; border-radius: var(--radius); z-index: 1000; transition: transform 0.3s ease; }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+  <div id="toast" class="toast"></div>
+  <div class="container">
+    <div class="header"><button class="back-btn" onclick="history.back()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button><h1>Create New Wish</h1></div>
+    
+    <form id="wishForm">
+      <div class="form-group"><label>Title</label><input type="text" id="title" maxlength="100" placeholder="A short title for your wish..."><div class="char-count"><span id="titleCount">0</span>/100</div></div>
+      
+      <div class="form-group"><label>Your Story (500 characters max)</label><textarea id="content" maxlength="500" placeholder="Write about your struggle, your wish, your plan..."></textarea><div class="char-count"><span id="contentCount">0</span>/500</div></div>
+      
+      <div class="form-group"><label>Mood Weather</label><div class="mood-grid" id="moodGrid"><div class="mood-option" data-mood="0">🌤️ Neutral</div><div class="mood-option" data-mood="1">☀️ Hopeful</div><div class="mood-option" data-mood="2">⛈️ Stormy</div><div class="mood-option" data-mood="3">🌈 Rainbow</div><div class="mood-option" data-mood="4">✨ Stars</div><div class="mood-option" data-mood="5">🔥 Fierce</div></div></div>
+      
+      <div class="form-group"><label>Image (optional)</label><input type="file" id="imageFile" accept="image/*"><div id="imagePreview" class="image-preview"></div></div>
+      
+      <div class="form-group"><label>Milestones (up to 3 - celebrate small wins)</label><div id="milestonesContainer"></div><button type="button" class="add-milestone" id="addMilestone">+ Add Milestone</button></div>
+      
+      <button type="submit" class="btn-primary">Create Wish</button>
+    </form>
+  </div>
+  
+  <script>
+    let token, selectedMood = 0, milestones = [], selectedImageBase64 = null;
+    function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast show'; setTimeout(() => t.classList.remove('show'), 3500); }
+    async function api(method, path, body) {
+      try {
+        const opts = { method, headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token } };
+        if (body) opts.body = JSON.stringify(body);
+        const res = await fetch('/api' + path, opts);
+        const data = await res.json();
+        return { ok: res.ok, data };
+      } catch(e) { return { ok: false, data: { error: 'Network error' } }; }
+    }
+    
+    token = localStorage.getItem('unfurl_token');
+    if (!token) window.location.href = '/login.html';
+    
+    document.getElementById('title').addEventListener('input', (e) => { document.getElementById('titleCount').innerText = e.target.value.length; });
+    document.getElementById('content').addEventListener('input', (e) => { document.getElementById('contentCount').innerText = e.target.value.length; });
+    
+    document.querySelectorAll('.mood-option').forEach(opt => {
+      opt.onclick = () => {
+        document.querySelectorAll('.mood-option').forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+        selectedMood = parseInt(opt.dataset.mood);
+      };
+    });
+    document.querySelector('.mood-option').classList.add('selected');
+    
+    document.getElementById('imageFile').onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (ev) => { selectedImageBase64 = ev.target.result.split(',')[1]; document.getElementById('imagePreview').innerHTML = `<img src="${ev.target.result}" class="preview-img">`; };
+        reader.readAsDataURL(file);
+      }
+    };
+    
+    function renderMilestones() {
+      const container = document.getElementById('milestonesContainer');
+      container.innerHTML = '';
+      milestones.forEach((m, i) => {
+        const div = document.createElement('div');
+        div.className = 'milestone-input';
+        div.innerHTML = `<input type="text" placeholder="Milestone ${i+1}" value="${m}" onchange="updateMilestone(${i}, this.value)"><button type="button" class="remove-milestone" onclick="removeMilestone(${i})">✕</button>`;
+        container.appendChild(div);
+      });
+    }
+    window.updateMilestone = (idx, val) => { milestones[idx] = val; };
+    window.removeMilestone = (idx) => { milestones.splice(idx, 1); renderMilestones(); };
+    document.getElementById('addMilestone').onclick = () => { if (milestones.length < 3) { milestones.push(''); renderMilestones(); } else showToast('Maximum 3 milestones'); };
+    
+    document.getElementById('wishForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const title = document.getElementById('title').value.trim();
+      const content = document.getElementById('content').value.trim();
+      if (!title) { showToast('Title is required'); return; }
+      if (!content) { showToast('Please share your story'); return; }
+      const res = await api('POST', '/wishes', { title, content, imageBase64: selectedImageBase64, moodWeather: selectedMood, milestones: milestones.filter(m => m.trim()) });
+      if (res.ok) { showToast('Wish created!'); setTimeout(() => { window.location.href = '/dashboard.html'; }, 1500); }
+      else showToast(res.data.error);
+    };
+  </script>
+</body>
+</html>

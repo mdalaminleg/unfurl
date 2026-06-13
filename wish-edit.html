@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Edit Wish – Unfurl</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #0a0a1a;
+      --bg-gradient: linear-gradient(135deg, #0a0a1a 0%, #0f0f25 100%);
+      --surface: #111122;
+      --surface2: #1a1a2e;
+      --surface3: #16213e;
+      --border: rgba(255,255,255,0.06);
+      --accent: #e94560;
+      --accent2: #ff6b6b;
+      --gold: #ffd700;
+      --green: #10d48e;
+      --white: #f0f4f8;
+      --gray: #7a8899;
+      --radius: 12px;
+      --radius-lg: 20px;
+    }
+    body { background: var(--bg-gradient); color: var(--white); font-family: 'Inter', sans-serif; }
+    .container { max-width: 800px; margin: 0 auto; padding: 0 24px; }
+    .header { padding: 24px 0; border-bottom: 1px solid var(--border); margin-bottom: 32px; display: flex; align-items: center; gap: 16px; }
+    .back-btn { background: none; border: none; cursor: pointer; padding: 8px; border-radius: var(--radius); color: var(--gray); }
+    h1 { font-family: 'Cormorant Garamond', serif; font-size: 28px; }
+    .form-group { margin-bottom: 24px; }
+    label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--gray); }
+    input, textarea, select { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; color: var(--white); font-family: 'Inter', sans-serif; }
+    textarea { resize: vertical; min-height: 150px; }
+    .btn-primary { width: 100%; background: var(--accent); color: white; border: none; padding: 14px; border-radius: var(--radius); font-weight: 600; cursor: pointer; }
+    .btn-primary:hover { background: var(--accent2); }
+    .status-selector { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
+    .status-option { flex: 1; text-align: center; padding: 12px; border-radius: var(--radius); border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; }
+    .status-option.selected { border-color: var(--gold); background: var(--gold-dim); }
+    .milestone-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--surface2); border-radius: var(--radius); margin-bottom: 8px; }
+    .milestone-checkbox { width: 20px; height: 20px; cursor: pointer; }
+    .share-section { margin-top: 32px; padding: 24px; background: var(--surface2); border-radius: var(--radius-lg); text-align: center; }
+    .share-url { background: var(--surface3); padding: 12px; border-radius: var(--radius); word-break: break-all; font-size: 12px; margin: 12px 0; }
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--surface3); padding: 12px 24px; border-radius: var(--radius); z-index: 1000; transition: transform 0.3s ease; }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .confetti { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; }
+  </style>
+</head>
+<body>
+  <div id="toast" class="toast"></div>
+  <div class="container">
+    <div class="header"><button class="back-btn" onclick="history.back()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button><h1>Edit Wish</h1></div>
+    
+    <form id="wishForm">
+      <div class="form-group"><label>Title</label><input type="text" id="title" maxlength="100"></div>
+      <div class="form-group"><label>Your Story</label><textarea id="content" maxlength="500"></textarea></div>
+      <div class="form-group"><label>Status</label><div class="status-selector" id="statusSelector"><div class="status-option" data-status="struggling">🌱 Struggling</div><div class="status-option" data-status="in_progress">📈 In Progress</div><div class="status-option" data-status="achieved">🏆 Achieved</div></div></div>
+      <div class="form-group"><label>Milestones</label><div id="milestonesList"></div></div>
+      <button type="submit" class="btn-primary">Save Changes</button>
+    </form>
+    
+    <div class="share-section" id="shareSection" style="display:none"><h3>Share Your Victory</h3><p>Your wish has been achieved! Share it with the world.</p><button class="btn-primary" id="shareBtn">🔗 Generate Public Link</button><div id="shareUrl" class="share-url"></div></div>
+  </div>
+  
+  <script>
+    let token, wishId, wishData, milestones = [], selectedStatus = 'struggling';
+    function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast show'; setTimeout(() => t.classList.remove('show'), 3500); }
+    async function api(method, path, body) {
+      try {
+        const opts = { method, headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token } };
+        if (body) opts.body = JSON.stringify(body);
+        const res = await fetch('/api' + path, opts);
+        const data = await res.json();
+        return { ok: res.ok, data };
+      } catch(e) { return { ok: false, data: { error: 'Network error' } }; }
+    }
+    
+    function confetti() {
+      for (let i = 0; i < 100; i++) { const div = document.createElement('div'); div.className = 'confetti'; div.style.position = 'fixed'; div.style.left = Math.random() * 100 + '%'; div.style.top = '-10px'; div.style.width = '8px'; div.style.height = '8px'; div.style.background = `hsl(${Math.random() * 360}, 70%, 60%)`; div.style.borderRadius = '50%'; div.style.animation = `fall ${2 + Math.random() * 2}s linear forwards`; document.body.appendChild(div); setTimeout(() => div.remove(), 3000); }
+      const style = document.createElement('style'); style.textContent = '@keyframes fall { to { transform: translateY(100vh) rotate(360deg); opacity: 0; } }'; document.head.appendChild(style);
+    }
+    
+    token = localStorage.getItem('unfurl_token');
+    if (!token) window.location.href = '/login.html';
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    wishId = urlParams.get('id');
+    if (!wishId) window.location.href = '/dashboard.html';
+    
+    async function loadWish() {
+      const res = await api('GET', `/wishes/${wishId}`);
+      if (res.ok) {
+        wishData = res.data.wish;
+        milestones = res.data.milestones || [];
+        document.getElementById('title').value = wishData.title;
+        document.getElementById('content').value = wishData.content;
+        selectedStatus = wishData.status;
+        document.querySelectorAll('.status-option').forEach(opt => { if (opt.dataset.status === selectedStatus) opt.classList.add('selected'); });
+        renderMilestones();
+        if (wishData.status === 'achieved' && !wishData.is_public) document.getElementById('shareSection').style.display = 'block';
+      }
+    }
+    
+    function renderMilestones() {
+      const container = document.getElementById('milestonesList');
+      if (!milestones.length) { container.innerHTML = '<div style="color:var(--gray); padding:12px;">No milestones set for this wish.</div>'; return; }
+      container.innerHTML = '';
+      milestones.forEach(m => {
+        const div = document.createElement('div');
+        div.className = 'milestone-item';
+        div.innerHTML = `<input type="checkbox" class="milestone-checkbox" data-id="${m.id}" ${m.is_completed ? 'checked' : ''}><span style="flex:1">${m.title}</span><span style="font-size:11px;color:var(--gray)">${m.is_completed ? '✓ Completed' : 'Pending'}</span>`;
+        container.appendChild(div);
+        const cb = div.querySelector('.milestone-checkbox');
+        cb.onchange = async () => { await api('POST', `/wishes/${wishId}/milestone/${m.id}`, { is_completed: cb.checked }); };
+      });
+    }
+    
+    document.querySelectorAll('.status-option').forEach(opt => {
+      opt.onclick = () => {
+        document.querySelectorAll('.status-option').forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+        selectedStatus = opt.dataset.status;
+        if (selectedStatus === 'achieved') confetti();
+      };
+    });
+    
+    document.getElementById('wishForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const title = document.getElementById('title').value;
+      const content = document.getElementById('content').value;
+      const res = await api('PUT', `/wishes/${wishId}`, { title, content, status: selectedStatus, milestones: milestones.map(m => ({ id: m.id, is_completed: m.is_completed })) });
+      if (res.ok) { showToast('Wish updated!'); if (selectedStatus === 'achieved') document.getElementById('shareSection').style.display = 'block'; else setTimeout(() => window.location.href = '/dashboard.html', 1000); }
+      else showToast(res.data.error);
+    };
+    
+    document.getElementById('shareBtn').onclick = async () => {
+      const res = await api('POST', `/wishes/${wishId}/share`);
+      if (res.ok) { document.getElementById('shareUrl').innerHTML = `<a href="${res.data.url}" target="_blank" style="color:var(--gold)">${res.data.url}</a>`; showToast('Link created! Share your victory.'); }
+      else showToast(res.data.error);
+    };
+    
+    loadWish();
+  </script>
+</body>
+</html>

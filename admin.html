@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Admin – Unfurl</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #0a0a1a;
+      --surface: #111122;
+      --surface2: #1a1a2e;
+      --surface3: #16213e;
+      --border: rgba(255,255,255,0.06);
+      --accent: #e94560;
+      --gold: #ffd700;
+      --white: #f0f4f8;
+      --gray: #7a8899;
+      --radius: 12px;
+      --radius-lg: 20px;
+    }
+    body { background: var(--bg); color: var(--white); font-family: 'Inter', sans-serif; }
+    .container { max-width: 1400px; margin: 0 auto; padding: 0 24px; }
+    .header { padding: 20px 0; border-bottom: 1px solid var(--border); margin-bottom: 32px; display: flex; justify-content: space-between; align-items: center; }
+    .logo { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 700; display: flex; align-items: center; gap: 12px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin-bottom: 32px; }
+    .stat-card { background: var(--surface2); border-radius: var(--radius-lg); padding: 24px; text-align: center; border: 1px solid var(--border); }
+    .stat-number { font-size: 36px; font-weight: 700; color: var(--gold); }
+    .data-table { background: var(--surface2); border-radius: var(--radius-lg); overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { background: var(--surface3); font-weight: 600; }
+    .btn-small { background: var(--surface3); border: 1px solid var(--border); padding: 6px 12px; border-radius: var(--radius); cursor: pointer; margin: 2px; }
+    .btn-danger { background: rgba(233,69,96,0.2); color: var(--accent); border-color: var(--accent); }
+    .tabs { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+    .tab { padding: 10px 24px; background: var(--surface2); border: 1px solid var(--border); border-radius: 40px; cursor: pointer; }
+    .tab.active { background: var(--accent); border-color: var(--accent); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--surface3); padding: 12px 24px; border-radius: var(--radius); z-index: 1000; transition: transform 0.3s ease; }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+  <div id="toast" class="toast"></div>
+  <div class="container">
+    <div class="header"><div class="logo">🔧 Unfurl Admin</div><button id="logoutBtn" class="btn-small">Logout</button></div>
+    <div class="tabs"><div class="tab active" data-tab="stats">📊 Stats</div><div class="tab" data-tab="users">👥 Users</div><div class="tab" data-tab="wishes">📝 Wishes</div><div class="tab" data-tab="words">🚫 Banned Words</div></div>
+    <div id="tab-stats" class="tab-content active"><div class="stats-grid" id="statsGrid"><div>Loading...</div></div></div>
+    <div id="tab-users" class="tab-content"><div class="data-table" id="usersTable"><div>Loading...</div></div></div>
+    <div id="tab-wishes" class="tab-content"><div class="data-table" id="wishesTable"><div>Loading...</div></div></div>
+    <div id="tab-words" class="tab-content"><div><input type="text" id="newWord" placeholder="Add banned word"><button id="addWordBtn" class="btn-small">Add</button></div><div class="data-table" id="wordsTable" style="margin-top:16px"><div>Loading...</div></div></div>
+  </div>
+  <script>
+    let token;
+    function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast show'; setTimeout(() => t.classList.remove('show'), 3500); }
+    async function api(method, path, body) {
+      try {
+        const opts = { method, headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token } };
+        if (body) opts.body = JSON.stringify(body);
+        const res = await fetch('/api' + path, opts);
+        return await res.json();
+      } catch(e) { return { error: 'Network error' }; }
+    }
+    token = localStorage.getItem('unfurl_token');
+    if (!token) window.location.href = '/login.html';
+    async function loadStats() { const data = await api('GET', '/admin/stats'); if (!data.error) { document.getElementById('statsGrid').innerHTML = `<div class="stat-card"><div class="stat-number">${data.users}</div><div>Users</div></div><div class="stat-card"><div class="stat-number">${data.wishes}</div><div>Wishes</div></div><div class="stat-card"><div class="stat-number">${data.publicWishes}</div><div>Public Victories</div></div><div class="stat-card"><div class="stat-number">${data.achievedWishes}</div><div>Achieved</div></div><div class="stat-card"><div class="stat-number">${data.totalLoves}</div><div>❤️ Loves</div></div><div class="stat-card"><div class="stat-number">${data.voiceMessages}</div><div>Voice Messages</div></div>`; } }
+    async function loadUsers() { const data = await api('GET', '/admin/users'); if (!data.error && data.users) { let html = '<table><th>ID</th><th>Email</th><th>Name</th><th>Role</th><th>Banned</th><th>Action</th></tr>'; for (const u of data.users) html += `<tr><td>${u.id}</td><td>${u.email}</td><td>${u.name}</td><td>${u.role}</td><td>${u.is_banned ? 'Yes' : 'No'}</td><td>${!u.is_banned ? `<button class="btn-small btn-danger" onclick="banUser(${u.id})">Ban</button>` : `<button class="btn-small" onclick="unbanUser(${u.id})">Unban</button>`}</td></tr>`; document.getElementById('usersTable').innerHTML = `<table>${html}</table>`; } }
+    async function loadWishes() { const data = await api('GET', '/admin/wishes'); if (!data.error && data.wishes) { let html = '<tr><th>ID</th><th>User</th><th>Title</th><th>Status</th><th>Public</th><th>Action</th></tr>'; for (const w of data.wishes) html += `<tr><td>${w.id}</td><td>${w.user_name}</td><td>${w.title.substring(0, 50)}</td><td>${w.status}</td><td>${w.is_public ? 'Yes' : 'No'}</td><td><button class="btn-small btn-danger" onclick="deleteWish(${w.id})">Delete</button></td></tr>`; document.getElementById('wishesTable').innerHTML = `<table>${html}</table>`; } }
+    async function loadBannedWords() { const data = await api('GET', '/admin/banned-words'); if (!data.error && data.words) { let html = '<tr><th>Word</th><th>Action</th></tr>'; for (const w of data.words) html += `<tr><td>${w.word}</td><td><button class="btn-small btn-danger" onclick="deleteWord('${w.word}')">Remove</button></td></tr>`; document.getElementById('wordsTable').innerHTML = `<table>${html}</table>`; } }
+    window.banUser = async (id) => { await api('POST', '/admin/user/ban', { userId: id }); showToast('User banned'); loadUsers(); loadStats(); };
+    window.unbanUser = async (id) => { await api('POST', '/admin/user/unban', { userId: id }); showToast('User unbanned'); loadUsers(); };
+    window.deleteWish = async (id) => { await api('DELETE', `/admin/wish/${id}`); showToast('Wish deleted'); loadWishes(); loadStats(); };
+    window.deleteWord = async (word) => { await api('DELETE', '/admin/banned-words', { word }); showToast('Word removed'); loadBannedWords(); };
+    document.getElementById('addWordBtn').onclick = async () => { const word = document.getElementById('newWord').value.trim(); if (word) { await api('POST', '/admin/banned-words', { word }); showToast('Word added'); loadBannedWords(); document.getElementById('newWord').value = ''; } };
+    document.querySelectorAll('.tab').forEach(tab => { tab.onclick = () => { document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); tab.classList.add('active'); document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active')); document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active'); if (tab.dataset.tab === 'users') loadUsers(); if (tab.dataset.tab === 'wishes') loadWishes(); if (tab.dataset.tab === 'words') loadBannedWords(); }; });
+    document.getElementById('logoutBtn').onclick = () => { localStorage.clear(); window.location.href = '/login.html'; };
+    loadStats(); loadUsers(); loadWishes(); loadBannedWords();
+  </script>
+</body>
+</html>

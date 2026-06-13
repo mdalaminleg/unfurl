@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Login – Unfurl</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #0a0a1a;
+      --bg-gradient: linear-gradient(135deg, #0a0a1a 0%, #0f0f25 100%);
+      --surface: #111122;
+      --surface2: #1a1a2e;
+      --surface3: #16213e;
+      --border: rgba(255,255,255,0.06);
+      --border2: rgba(255,255,255,0.1);
+      --accent: #e94560;
+      --accent2: #ff6b6b;
+      --accent-dim: rgba(233,69,96,0.1);
+      --gold: #ffd700;
+      --white: #f0f4f8;
+      --gray: #7a8899;
+      --gray2: #a0adb8;
+      --radius: 12px;
+      --radius-lg: 20px;
+      --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    body { background: var(--bg-gradient); color: var(--white); font-family: 'Inter', sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .login-container { max-width: 440px; width: 90%; background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 48px 40px; }
+    .logo { text-align: center; margin-bottom: 32px; display: flex; align-items: center; justify-content: center; gap: 12px; font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 700; }
+    .logo-icon { width: 40px; height: 40px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+    .logo-icon svg { width: 24px; height: 24px; stroke: white; stroke-width: 1.5; fill: none; }
+    h1 { font-size: 28px; margin-bottom: 8px; text-align: center; font-family: 'Cormorant Garamond', serif; }
+    .sub { text-align: center; color: var(--gray); margin-bottom: 32px; font-size: 14px; }
+    .input-group { margin-bottom: 24px; }
+    label { display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500; color: var(--gray2); }
+    input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; color: var(--white); font-family: 'Inter', sans-serif; transition: var(--transition); font-size: 14px; }
+    input:focus { outline: none; border-color: var(--accent); }
+    .btn-primary { width: 100%; background: var(--accent); color: white; border: none; padding: 14px; border-radius: var(--radius); font-weight: 600; font-size: 16px; cursor: pointer; transition: var(--transition); margin-top: 8px; }
+    .btn-primary:hover { background: var(--accent2); transform: translateY(-2px); }
+    .footer-links { text-align: center; margin-top: 24px; font-size: 14px; color: var(--gray); }
+    .footer-links a { color: var(--accent); text-decoration: none; }
+    .footer-links a:hover { text-decoration: underline; }
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--surface3); color: var(--white); padding: 12px 24px; border-radius: var(--radius); font-size: 14px; z-index: 1000; transition: transform 0.3s ease; border: 1px solid var(--border); }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast-error { border-left: 3px solid var(--accent); }
+    .toast-success { border-left: 3px solid var(--gold); }
+  </style>
+</head>
+<body>
+  <div id="toast" class="toast"></div>
+  <div class="login-container">
+    <div class="logo">
+      <div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div>
+      <span>Unfurl</span>
+    </div>
+    <h1>Welcome back</h1>
+    <div class="sub">Sign in to continue your journey</div>
+    <form id="loginForm">
+      <div class="input-group"><label>Email</label><input type="email" id="email" required autocomplete="email"></div>
+      <div class="input-group"><label>Password</label><input type="password" id="password" required autocomplete="current-password"></div>
+      <button type="submit" class="btn-primary">Sign In</button>
+    </form>
+    <div class="footer-links">Don't have an account? <a href="/signup.html">Create one</a></div>
+  </div>
+  <script>
+    function showToast(msg, type) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = `toast toast-${type} show`;
+      setTimeout(() => t.classList.remove('show'), 3500);
+    }
+    async function api(method, path, body) {
+      try {
+        const opts = { method, headers: { 'Content-Type': 'application/json' } };
+        if (body) opts.body = JSON.stringify(body);
+        const res = await fetch('/api' + path, opts);
+        const data = await res.json();
+        return { ok: res.ok, data, status: res.status };
+      } catch(e) { return { ok: false, data: { error: 'Network error' }, status: 0 }; }
+    }
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      if (!email || !password) { showToast('Please fill in all fields', 'error'); return; }
+      const res = await api('POST', '/auth/login', { email, password });
+      if (res.ok) {
+        localStorage.setItem('unfurl_token', res.data.token);
+        localStorage.setItem('unfurl_user', JSON.stringify(res.data.user));
+        showToast('Login successful! Redirecting...', 'success');
+        setTimeout(() => { window.location.href = '/dashboard.html'; }, 1000);
+      } else { showToast(res.data.error || 'Login failed', 'error'); }
+    });
+    const token = localStorage.getItem('unfurl_token');
+    if (token) window.location.href = '/dashboard.html';
+  </script>
+</body>
+</html>

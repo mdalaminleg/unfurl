@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Victory – Unfurl</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #0a0a1a;
+      --surface: #111122;
+      --surface2: #1a1a2e;
+      --border: rgba(255,255,255,0.06);
+      --accent: #e94560;
+      --gold: #ffd700;
+      --green: #10d48e;
+      --white: #f0f4f8;
+      --gray: #7a8899;
+      --radius: 16px;
+      --radius-lg: 24px;
+    }
+    body { background: linear-gradient(135deg, #0a0a1a 0%, #0f0f25 100%); color: var(--white); font-family: 'Inter', sans-serif; min-height: 100vh; }
+    .container { max-width: 800px; margin: 0 auto; padding: 40px 24px; }
+    .victory-badge { text-align: center; margin-bottom: 32px; }
+    .victory-icon { width: 80px; height: 80px; background: var(--gold-dim); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+    .wish-card { background: var(--surface); border-radius: var(--radius-lg); padding: 40px; border: 1px solid var(--border); }
+    .user-name { text-align: center; margin-bottom: 24px; color: var(--gray); font-size: 14px; }
+    .title { font-size: 32px; font-family: 'Cormorant Garamond', serif; margin-bottom: 24px; text-align: center; }
+    .content { font-size: 18px; line-height: 1.7; margin-bottom: 32px; white-space: pre-wrap; }
+    .image { max-width: 100%; border-radius: var(--radius); margin: 24px 0; }
+    .milestones { background: var(--surface2); border-radius: var(--radius); padding: 24px; margin: 24px 0; }
+    .milestone-item { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+    .stats { display: flex; gap: 32px; justify-content: center; margin: 32px 0; padding: 20px; background: var(--surface2); border-radius: var(--radius); }
+    .stat { text-align: center; }
+    .stat-number { font-size: 28px; font-weight: 700; color: var(--gold); }
+    .love-btn { background: var(--accent); border: none; padding: 14px 32px; border-radius: 40px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; margin: 0 auto; }
+    .voice-section { margin-top: 32px; text-align: center; }
+    .voice-btn { background: var(--surface2); border: 1px solid var(--border); padding: 12px 24px; border-radius: 40px; cursor: pointer; }
+    .footer { text-align: center; margin-top: 40px; color: var(--gray); font-size: 12px; }
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--surface2); padding: 12px 24px; border-radius: var(--radius); z-index: 1000; transition: transform 0.3s ease; }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+    .love-animation { animation: pulse 0.3s ease; }
+  </style>
+</head>
+<body>
+  <div id="toast" class="toast"></div>
+  <div class="container" id="container"><div style="text-align:center;padding:60px">Loading...</div></div>
+  <script>
+    const slug = window.location.pathname.split('/').pop();
+    let hasLoved = false, loveCount = 0;
+    function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast show'; setTimeout(() => t.classList.remove('show'), 3500); }
+    async function api(method, path, body) {
+      try {
+        const opts = { method, headers: { 'Content-Type': 'application/json' } };
+        if (body) opts.body = JSON.stringify(body);
+        const res = await fetch('/api' + path, opts);
+        return await res.json();
+      } catch(e) { return { error: 'Network error' }; }
+    }
+    async function loadPublic() {
+      const data = await api('GET', `/public/${slug}`);
+      if (data.error) { document.getElementById('container').innerHTML = `<div style="text-align:center;padding:60px"><h2>Not Found</h2><p>This victory story hasn't been shared yet or doesn't exist.</p></div>`; return; }
+      const w = data.wish;
+      loveCount = w.love_count;
+      hasLoved = w.has_loved;
+      let moodEmoji = '🌱';
+      if (w.mood_weather === 1) moodEmoji = '☀️';
+      if (w.mood_weather === 2) moodEmoji = '⛈️';
+      if (w.mood_weather === 3) moodEmoji = '🌈';
+      if (w.mood_weather === 4) moodEmoji = '✨';
+      if (w.mood_weather === 5) moodEmoji = '🔥';
+      let milestonesHtml = '';
+      if (data.milestones && data.milestones.length) {
+        milestonesHtml = '<div class="milestones"><h3 style="margin-bottom:16px">🏆 Milestones Achieved</h3>';
+        for (const m of data.milestones) milestonesHtml += `<div class="milestone-item"><span>${m.is_completed ? '✓' : '○'}</span> ${m.title}</div>`;
+        milestonesHtml += '</div>';
+      }
+      document.getElementById('container').innerHTML = `
+        <div class="victory-badge"><div class="victory-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div style="color:var(--gold)">Victory Unfurled</div></div>
+        <div class="wish-card"><div class="user-name">${w.user_name} • ${moodEmoji} • ${new Date(w.achieved_at * 1000).toLocaleDateString()}</div>
+        <h1 class="title">${w.title}</h1><div class="content">${w.content.replace(/\n/g, '<br>')}</div>${w.image_url ? `<img src="${w.image_url}" class="image">` : ''}${milestonesHtml}
+        <div class="stats"><div class="stat"><div class="stat-number" id="loveCount">${loveCount}</div><div>❤️ Loves</div></div><div class="stat"><div class="stat-number">${w.public_views || 0}</div><div>👁️ Views</div></div></div>
+        <div style="text-align:center"><button class="love-btn" id="loveBtn">❤️ ${hasLoved ? 'Loved' : 'Send Love'}</button></div>
+        <div class="voice-section"><button class="voice-btn" id="voiceBtn">🎙️ Leave Voice Message (Coming Soon)</button></div></div>
+        <div class="footer">This soul turned struggle into victory. Be inspired. Be kind.</div>`;
+      document.getElementById('loveBtn').onclick = async () => { const res = await api('POST', `/public/${slug}/love`); loveCount = res.love_count; document.getElementById('loveCount').innerText = loveCount; document.getElementById('loveBtn').innerHTML = `❤️ ${res.loved ? 'Loved' : 'Send Love'}`; document.getElementById('loveBtn').classList.add('love-animation'); setTimeout(() => document.getElementById('loveBtn').classList.remove('love-animation'), 300); };
+    }
+    loadPublic();
+  </script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+name = "unfurl"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "UNFURL_DB"
+database_name = "struggle-db"
+database_id = "085e466d-dd79-405d-8a1a-1ba93bbef4af"

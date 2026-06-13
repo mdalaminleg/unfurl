@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Dashboard – Unfurl</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #0a0a1a;
+      --bg-gradient: linear-gradient(135deg, #0a0a1a 0%, #0f0f25 100%);
+      --surface: #111122;
+      --surface2: #1a1a2e;
+      --surface3: #16213e;
+      --border: rgba(255,255,255,0.06);
+      --border2: rgba(255,255,255,0.1);
+      --accent: #e94560;
+      --accent2: #ff6b6b;
+      --accent-dim: rgba(233,69,96,0.1);
+      --gold: #ffd700;
+      --gold-dim: rgba(255,215,0,0.1);
+      --white: #f0f4f8;
+      --gray: #7a8899;
+      --gray2: #a0adb8;
+      --green: #10d48e;
+      --radius: 12px;
+      --radius-lg: 20px;
+      --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    body { background: var(--bg-gradient); color: var(--white); font-family: 'Inter', sans-serif; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    .header { position: sticky; top: 0; background: rgba(10,10,26,0.95); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 16px 0; z-index: 100; }
+    .header-inner { display: flex; justify-content: space-between; align-items: center; }
+    .logo { display: flex; align-items: center; gap: 12px; font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 700; }
+    .logo-icon { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    .logo-icon svg { width: 18px; height: 18px; stroke: white; stroke-width: 1.5; fill: none; }
+    .header-actions { display: flex; gap: 16px; align-items: center; }
+    .icon-btn { background: none; border: none; cursor: pointer; padding: 8px; border-radius: var(--radius); transition: var(--transition); display: flex; align-items: center; justify-content: center; color: var(--gray); }
+    .icon-btn:hover { background: var(--surface2); color: var(--white); }
+    .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--surface3); display: flex; align-items: center; justify-content: center; font-weight: 600; }
+    .hamburger { display: none; background: none; border: none; cursor: pointer; padding: 8px; border-radius: var(--radius); }
+    .hamburger svg { width: 24px; height: 24px; stroke: var(--white); }
+    
+    /* Sidebar */
+    .sidebar { position: fixed; top: 0; right: -280px; width: 280px; height: 100vh; background: var(--surface2); backdrop-filter: blur(20px); border-left: 1px solid var(--border); transition: right 0.3s ease; z-index: 1001; padding: 80px 24px 24px; }
+    .sidebar.open { right: 0; }
+    .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; visibility: hidden; opacity: 0; transition: var(--transition); }
+    .sidebar-overlay.active { visibility: visible; opacity: 1; }
+    .sidebar-nav { display: flex; flex-direction: column; gap: 20px; }
+    .sidebar-nav a, .sidebar-nav button { background: none; border: none; color: var(--gray2); text-decoration: none; font-size: 16px; font-weight: 500; transition: var(--transition); text-align: left; cursor: pointer; padding: 8px 0; width: 100%; font-family: 'Inter', sans-serif; }
+    .sidebar-nav a:hover, .sidebar-nav button:hover { color: var(--accent); }
+    .sidebar-close { position: absolute; top: 20px; right: 20px; background: none; border: none; cursor: pointer; }
+    .sidebar-close svg { width: 24px; height: 24px; stroke: var(--white); }
+    hr { border-color: var(--border); margin: 16px 0; }
+    
+    /* Main */
+    .main { padding: 32px 0; }
+    .welcome-card { background: linear-gradient(135deg, var(--surface2) 0%, var(--surface3) 100%); border-radius: var(--radius-lg); padding: 32px; margin-bottom: 32px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
+    .welcome-text h2 { font-family: 'Cormorant Garamond', serif; font-size: 28px; margin-bottom: 8px; }
+    .welcome-text p { color: var(--gray); font-size: 14px; }
+    .quote-card { background: var(--surface2); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 32px; border-left: 3px solid var(--gold); }
+    .quote-text { font-style: italic; font-size: 18px; font-family: 'Cormorant Garamond', serif; margin-bottom: 8px; }
+    .quote-author { color: var(--gray); font-size: 13px; }
+    .stats-row { display: flex; gap: 16px; margin-bottom: 32px; flex-wrap: wrap; }
+    .stat-pill { background: var(--surface2); border-radius: 40px; padding: 8px 20px; font-size: 13px; border: 1px solid var(--border); }
+    .stat-pill span { color: var(--gold); font-weight: 700; margin-right: 6px; }
+    
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+    .btn-primary { background: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 40px; font-weight: 600; cursor: pointer; transition: var(--transition); text-decoration: none; display: inline-block; font-size: 14px; }
+    .btn-primary:hover { background: var(--accent2); transform: translateY(-2px); }
+    .btn-outline { background: transparent; border: 1px solid var(--border2); color: var(--white); padding: 12px 24px; border-radius: 40px; font-weight: 500; cursor: pointer; transition: var(--transition); text-decoration: none; font-size: 14px; }
+    
+    .wish-card { background: var(--surface2); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 20px; border: 1px solid var(--border); transition: var(--transition); }
+    .wish-card:hover { transform: translateY(-2px); border-color: var(--accent-dim); }
+    .wish-title { font-size: 18px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .status-badge { font-size: 11px; padding: 4px 12px; border-radius: 40px; font-weight: 500; }
+    .status-struggling { background: var(--accent-dim); color: var(--accent); }
+    .status-progress { background: var(--gold-dim); color: var(--gold); }
+    .status-achieved { background: rgba(16,212,142,0.1); color: var(--green); }
+    .wish-preview { color: var(--gray); font-size: 14px; margin-bottom: 16px; line-height: 1.5; }
+    .wish-meta { display: flex; gap: 20px; font-size: 12px; color: var(--gray); margin-bottom: 16px; }
+    .wish-actions { display: flex; gap: 12px; }
+    .btn-small { background: var(--surface3); border: 1px solid var(--border); padding: 6px 16px; border-radius: 40px; font-size: 12px; cursor: pointer; transition: var(--transition); color: var(--gray2); text-decoration: none; display: inline-block; }
+    .btn-small:hover { background: var(--accent); color: white; border-color: var(--accent); }
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--gray); }
+    .loading { text-align: center; padding: 40px; color: var(--gray); }
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--surface3); color: var(--white); padding: 12px 24px; border-radius: var(--radius); font-size: 14px; z-index: 1002; transition: transform 0.3s ease; border: 1px solid var(--border); }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    
+    @media (max-width: 768px) {
+      .hamburger { display: block; }
+      .welcome-card { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <div id="toast" class="toast"></div>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <div class="sidebar" id="mobileSidebar">
+    <button class="sidebar-close" id="closeSidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <div class="sidebar-nav">
+      <a href="/dashboard.html">Dashboard</a>
+      <a href="/wish-new.html">New Wish</a>
+      <hr>
+      <button id="sidebarLogout">Sign Out</button>
+    </div>
+  </div>
+  
+  <header class="header">
+    <div class="container header-inner">
+      <div class="logo"><div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div><span>Unfurl</span></div>
+      <div class="header-actions">
+        <button class="icon-btn" id="newWishBtn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        <button class="hamburger" id="hamburgerBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+      </div>
+    </div>
+  </header>
+  
+  <main class="main">
+    <div class="container">
+      <div class="welcome-card">
+        <div class="welcome-text"><h2 id="userName">Welcome back</h2><p>Your private space. Your journey. Your victory.</p></div>
+        <a href="/wish-new.html" class="btn-primary">+ New Wish</a>
+      </div>
+      
+      <div class="quote-card" id="quoteCard"><div class="loading">Loading daily inspiration...</div></div>
+      
+      <div class="stats-row" id="statsRow"><div class="stat-pill"><span>📊</span> Loading...</div></div>
+      
+      <div class="section-header"><h3>Your Wishes</h3></div>
+      <div id="wishesList"><div class="loading">Loading your wishes...</div></div>
+    </div>
+  </main>
+  
+  <script>
+    let token, currentUser;
+    function esc(s) { const d = document.createElement('div'); d.textContent = String(s || ''); return d.innerHTML; }
+    function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast show'; setTimeout(() => t.classList.remove('show'), 3500); }
+    async function api(method, path, body) {
+      try {
+        const opts = { method, headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token } };
+        if (body && method !== 'GET') opts.body = JSON.stringify(body);
+        const res = await fetch('/api' + path, opts);
+        const data = await res.json();
+        return { ok: res.ok, data, status: res.status };
+      } catch(e) { return { ok: false, data: { error: 'Network error' }, status: 0 }; }
+    }
+    
+    function getTimeAgo(ts) {
+      const seconds = Math.floor(Date.now() / 1000) - ts;
+      if (seconds < 60) return `${seconds}s ago`;
+      const minutes = Math.floor(seconds / 60);
+      if (minutes < 60) return `${minutes}m ago`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours}h ago`;
+      const days = Math.floor(hours / 24);
+      return `${days}d ago`;
+    }
+    
+    async function loadDashboard() {
+      const wishesRes = await api('GET', '/wishes');
+      if (wishesRes.ok) renderWishes(wishesRes.data.wishes);
+      else showToast(wishesRes.data.error);
+      
+      const remainingRes = await api('GET', '/remaining-posts');
+      if (remainingRes.ok) {
+        const hrs = Math.floor(remainingRes.data.resetSeconds / 3600);
+        const mins = Math.floor((remainingRes.data.resetSeconds % 3600) / 60);
+        document.getElementById('statsRow').innerHTML = `<div class="stat-pill"><span>✨</span> ${remainingRes.data.remaining} of 3 wishes left today</div><div class="stat-pill"><span>⏰</span> Reset in ${hrs}h ${mins}m</div>`;
+      }
+      
+      const quoteRes = await api('GET', '/quote');
+      if (quoteRes.ok && quoteRes.data.quote) {
+        document.getElementById('quoteCard').innerHTML = `<div class="quote-text">“${esc(quoteRes.data.quote.quote_text)}”</div><div class="quote-author">— ${esc(quoteRes.data.quote.author)}</div>`;
+      }
+    }
+    
+    function renderWishes(wishes) {
+      if (!wishes || wishes.length === 0) {
+        document.getElementById('wishesList').innerHTML = '<div class="empty-state">No wishes yet. Create your first wish to start your journey.</div>';
+        return;
+      }
+      let html = '';
+      for (const w of wishes) {
+        let statusClass = 'status-struggling';
+        let statusText = 'Struggling';
+        if (w.status === 'in_progress') { statusClass = 'status-progress'; statusText = 'In Progress'; }
+        if (w.status === 'achieved') { statusClass = 'status-achieved'; statusText = 'Achieved 🎉'; }
+        html += `<div class="wish-card">
+          <div class="wish-title"><span>${esc(w.title)}</span><span class="status-badge ${statusClass}">${statusText}</span></div>
+          <div class="wish-preview">${esc(w.content.substring(0, 120))}${w.content.length > 120 ? '...' : ''}</div>
+          <div class="wish-meta"><span>📅 ${new Date(w.created_at * 1000).toLocaleDateString()}</span><span>⏱️ ${getTimeAgo(w.created_at)}</span>${w.is_public ? '<span>🔗 Public</span>' : '<span>🔒 Private</span>'}</div>
+          <div class="wish-actions"><a href="/wish-edit.html?id=${w.id}" class="btn-small">Edit</a><button class="btn-small" onclick="deleteWish(${w.id})">Delete</button></div>
+        </div>`;
+      }
+      document.getElementById('wishesList').innerHTML = html;
+    }
+    
+    window.deleteWish = async (id) => {
+      if (!confirm('Delete this wish permanently?')) return;
+      const res = await api('DELETE', `/wishes/${id}`);
+      if (res.ok) { showToast('Wish deleted'); loadDashboard(); }
+      else showToast(res.data.error);
+    };
+    
+    // Auth check
+    token = localStorage.getItem('unfurl_token');
+    const userStr = localStorage.getItem('unfurl_user');
+    if (!token || !userStr) window.location.href = '/login.html';
+    currentUser = JSON.parse(userStr);
+    document.getElementById('userName').innerHTML = `Welcome back, ${esc(currentUser.name || currentUser.email)}`;
+    
+    // Mobile sidebar
+    const hamburger = document.getElementById('hamburgerBtn');
+    const sidebar = document.getElementById('mobileSidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const closeSidebarBtn = document.getElementById('closeSidebar');
+    hamburger.onclick = () => { sidebar.classList.add('open'); overlay.classList.add('active'); };
+    function closeSidebarFunc() { sidebar.classList.remove('open'); overlay.classList.remove('active'); }
+    closeSidebarBtn.onclick = closeSidebarFunc;
+    overlay.onclick = closeSidebarFunc;
+    document.getElementById('sidebarLogout').onclick = () => { localStorage.clear(); window.location.href = '/login.html'; };
+    document.getElementById('newWishBtn').onclick = () => { window.location.href = '/wish-new.html'; };
+    
+    loadDashboard();
+  </script>
+</body>
+</html>

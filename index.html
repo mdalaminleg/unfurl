@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Unfurl – Your struggles witnessed. Your victories shared.</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #0a0a1a;
+      --bg-gradient: linear-gradient(135deg, #0a0a1a 0%, #0f0f25 100%);
+      --surface: #111122;
+      --surface2: #1a1a2e;
+      --surface3: #16213e;
+      --border: rgba(255,255,255,0.06);
+      --border2: rgba(255,255,255,0.1);
+      --accent: #e94560;
+      --accent2: #ff6b6b;
+      --accent-dim: rgba(233,69,96,0.1);
+      --gold: #ffd700;
+      --gold-dim: rgba(255,215,0,0.1);
+      --white: #f0f4f8;
+      --gray: #7a8899;
+      --gray2: #a0adb8;
+      --green: #10d48e;
+      --radius: 12px;
+      --radius-lg: 20px;
+      --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    body { background: var(--bg-gradient); color: var(--white); font-family: 'Inter', sans-serif; overflow-x: hidden; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    
+    /* Header */
+    .header { position: sticky; top: 0; background: rgba(10,10,26,0.95); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 16px 0; z-index: 1000; }
+    .header-inner { display: flex; justify-content: space-between; align-items: center; }
+    .logo { display: flex; align-items: center; gap: 12px; font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+    .logo-icon { width: 36px; height: 36px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+    .logo-icon svg { width: 22px; height: 22px; stroke: white; stroke-width: 1.5; fill: none; }
+    .nav { display: flex; gap: 32px; align-items: center; }
+    .nav a { color: var(--gray); text-decoration: none; transition: var(--transition); font-weight: 500; }
+    .nav a:hover { color: var(--accent); }
+    .btn-primary { background: var(--accent); color: white; border: none; padding: 10px 28px; border-radius: 40px; font-weight: 600; cursor: pointer; transition: var(--transition); text-decoration: none; display: inline-block; font-size: 14px; }
+    .btn-primary:hover { background: var(--accent2); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(233,69,96,0.3); }
+    .btn-outline { background: transparent; border: 1px solid var(--border2); color: var(--white); padding: 10px 28px; border-radius: 40px; font-weight: 500; cursor: pointer; transition: var(--transition); text-decoration: none; font-size: 14px; }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+    .hamburger { display: none; background: none; border: none; cursor: pointer; padding: 8px; border-radius: var(--radius); transition: var(--transition); }
+    .hamburger:hover { background: var(--surface2); }
+    .hamburger svg { width: 24px; height: 24px; stroke: var(--white); stroke-width: 1.5; }
+    
+    /* Mobile Sidebar */
+    .sidebar { position: fixed; top: 0; right: -280px; width: 280px; height: 100vh; background: var(--surface2); backdrop-filter: blur(20px); border-left: 1px solid var(--border); transition: right 0.3s ease; z-index: 1001; padding: 80px 24px 24px; }
+    .sidebar.open { right: 0; }
+    .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; visibility: hidden; opacity: 0; transition: var(--transition); }
+    .sidebar-overlay.active { visibility: visible; opacity: 1; }
+    .sidebar-nav { display: flex; flex-direction: column; gap: 24px; }
+    .sidebar-nav a { color: var(--gray2); text-decoration: none; font-size: 18px; font-weight: 500; transition: var(--transition); }
+    .sidebar-nav a:hover { color: var(--accent); }
+    .sidebar-close { position: absolute; top: 20px; right: 20px; background: none; border: none; cursor: pointer; }
+    .sidebar-close svg { width: 24px; height: 24px; stroke: var(--white); }
+    
+    /* Hero */
+    .hero { padding: 100px 0 80px; text-align: center; }
+    .hero-badge { display: inline-block; background: var(--accent-dim); border: 1px solid var(--accent-dim); border-radius: 100px; padding: 6px 16px; font-size: 13px; color: var(--accent); margin-bottom: 24px; }
+    .hero h1 { font-size: 64px; font-family: 'Cormorant Garamond', serif; margin-bottom: 24px; background: linear-gradient(135deg, var(--white) 0%, var(--gold) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+    .hero p { font-size: 18px; color: var(--gray2); max-width: 600px; margin: 0 auto 32px; line-height: 1.6; }
+    .hero-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    
+    /* Features */
+    .features { padding: 80px 0; border-top: 1px solid var(--border); }
+    .section-title { text-align: center; font-size: 40px; font-family: 'Cormorant Garamond', serif; margin-bottom: 16px; }
+    .section-subtitle { text-align: center; color: var(--gray); margin-bottom: 56px; font-size: 16px; }
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 32px; }
+    .feature-card { background: var(--surface2); border-radius: var(--radius-lg); padding: 32px; border: 1px solid var(--border); transition: var(--transition); }
+    .feature-card:hover { transform: translateY(-5px); border-color: var(--accent-dim); }
+    .feature-icon { width: 56px; height: 56px; background: var(--accent-dim); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; }
+    .feature-icon svg { width: 28px; height: 28px; stroke: var(--accent); stroke-width: 1.5; fill: none; }
+    .feature-card h3 { margin-bottom: 12px; font-size: 20px; }
+    .feature-card p { color: var(--gray); line-height: 1.5; font-size: 14px; }
+    
+    /* CTA */
+    .cta { padding: 80px 0; text-align: center; background: var(--surface2); border-radius: var(--radius-lg); margin: 40px 0; }
+    .cta h2 { font-size: 32px; font-family: 'Cormorant Garamond', serif; margin-bottom: 16px; }
+    .cta p { color: var(--gray); margin-bottom: 32px; }
+    
+    /* Footer */
+    .footer { border-top: 1px solid var(--border); padding: 48px 0 24px; margin-top: 80px; }
+    .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 48px; margin-bottom: 48px; }
+    .footer-col h4 { font-family: 'Cormorant Garamond', serif; margin-bottom: 16px; font-size: 18px; }
+    .footer-col a { display: block; color: var(--gray); text-decoration: none; margin-bottom: 10px; font-size: 13px; transition: var(--transition); }
+    .footer-col a:hover { color: var(--accent); }
+    .footer-bottom { text-align: center; color: var(--gray); font-size: 12px; padding-top: 24px; border-top: 1px solid var(--border); }
+    
+    /* Toast */
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--surface3); color: var(--white); padding: 12px 24px; border-radius: var(--radius); font-size: 14px; z-index: 1002; transition: transform 0.3s ease; border: 1px solid var(--border); }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 40px; }
+      .hero p { font-size: 16px; }
+      .nav { display: none; }
+      .hamburger { display: block; }
+      .features-grid { gap: 20px; }
+      .section-title { font-size: 32px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="toast" class="toast"></div>
+  
+  <!-- Mobile Sidebar -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <div class="sidebar" id="mobileSidebar">
+    <button class="sidebar-close" id="closeSidebar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="sidebar-nav">
+      <a href="/">Home</a>
+      <a href="/login.html">Login</a>
+      <a href="/signup.html">Start Your Journey</a>
+    </div>
+  </div>
+  
+  <header class="header">
+    <div class="container header-inner">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <span>Unfurl</span>
+      </div>
+      <div class="nav">
+        <a href="/">Home</a>
+        <a href="/login.html">Login</a>
+        <a href="/signup.html" class="btn-primary">Start Journey</a>
+      </div>
+      <button class="hamburger" id="hamburgerBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </header>
+  
+  <main>
+    <div class="container hero">
+      <span class="hero-badge">✨ Private. Safe. Transformative.</span>
+      <h1>Your struggles,<br>witnessed. Your victories,<br><span style="color:var(--gold); -webkit-text-fill-color:var(--gold);">shared.</span></h1>
+      <p>A private sanctuary for your hardest moments. Post your truth. Track your progress. When you're ready, share your victory with the world.</p>
+      <div class="hero-buttons">
+        <a href="/signup.html" class="btn-primary">Begin Unfurling</a>
+        <a href="/login.html" class="btn-outline">I already have an account</a>
+      </div>
+    </div>
+    
+    <div class="container features">
+      <h2 class="section-title">How Unfurl Works</h2>
+      <p class="section-subtitle">Three simple steps to transform struggle into victory</p>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10M12 2a10 10 0 0 1 10 10M12 2v10M22 12h-10" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M12 12l7 7" stroke="currentColor" stroke-width="1.5"/></svg></div>
+          <h3>1. Post Privately</h3>
+          <p>Write about your struggle, your wish, your plan. Only you can see it. No judgment. No pressure.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" stroke-width="1.5" fill="none"/><polyline points="22 4 12 14.01 9 11.01" stroke="currentColor" stroke-width="1.5" fill="none"/></svg></div>
+          <h3>2. Track Progress</h3>
+          <p>Update your status from "struggling" → "in progress" → "achieved". See how far you've come.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M12 8v4l3 3" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M6 3L3 6M18 3l3 3" stroke="currentColor" stroke-width="1.5"/></svg></div>
+          <h3>3. Share Victory</h3>
+          <p>When you achieve your goal, unlock a unique public link. Share it with anyone who supported you.</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="container cta">
+      <h2>Ready to start your journey?</h2>
+      <p>Join hundreds of souls who have transformed their struggles into victories.</p>
+      <a href="/signup.html" class="btn-primary">Create Free Account</a>
+    </div>
+  </main>
+  
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col"><h4>Unfurl</h4><a href="/">Home</a><a href="#">About</a><a href="#">Blog</a></div>
+        <div class="footer-col"><h4>Support</h4><a href="#">Help Center</a><a href="#">Privacy</a><a href="#">Terms</a></div>
+        <div class="footer-col"><h4>Legal</h4><a href="#">Safety</a><a href="#">Cookies</a><a href="#">Licenses</a></div>
+      </div>
+      <div class="footer-bottom">© 2024 Unfurl – A safe space for your journey. 3 posts daily. 500 characters per post.</div>
+    </div>
+  </footer>
+  
+  <script>
+    function showToast(msg, type = 'success') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = `toast toast-${type} show`;
+      setTimeout(() => t.classList.remove('show'), 3500);
+    }
+    
+    const token = localStorage.getItem('unfurl_token');
+    if (token) {
+      window.location.href = '/dashboard.html';
+    }
+    
+    // Mobile sidebar
+    const hamburger = document.getElementById('hamburgerBtn');
+    const sidebar = document.getElementById('mobileSidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const closeSidebar = document.getElementById('closeSidebar');
+    
+    hamburger.onclick = () => {
+      sidebar.classList.add('open');
+      overlay.classList.add('active');
+    };
+    function closeSidebarFunc() {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('active');
+    }
+    closeSidebar.onclick = closeSidebarFunc;
+    overlay.onclick = closeSidebarFunc;
+  </script>
+</body>
+</html>
